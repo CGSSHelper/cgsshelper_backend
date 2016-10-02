@@ -1,0 +1,5 @@
+msgpack-python==0.4.8
+PyMySQL==0.7.9
+pytz==2016.6.1
+requests==2.11.1
+tornado==4.4.2
