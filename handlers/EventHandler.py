@@ -46,13 +46,13 @@ class EventNowHandler(BaseHandler):
             return
         event_id = event["comm_data"]["id"]
         event["comm_data"]["bg_url"] = "/static/card/card_bg_" + event["comm_data"]["bg_id"] + "/bg_" + event["comm_data"]["bg_id"] + ".png"
-        event["comm_data"]["notice_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["notice_start"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["calc_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["calc_start"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["event_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_end"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["event_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_start"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["result_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_start"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["result_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_end"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
-        event["comm_data"]["second_half_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["second_half_start"], "%Y-%m-%d %H:%M:%S")).strftime('%Y-%m-%d %H:%M:%S %z')
+        event["comm_data"]["notice_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["notice_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["calc_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["calc_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["event_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["event_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["result_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["result_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
+        event["comm_data"]["second_half_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["second_half_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
 
         if(event["comm_data"]["type"] == "2"):
             # caravan event
