@@ -30,7 +30,7 @@ connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
 
 @tornado.gen.coroutine
 def checkcall():
-    global bot, eventtype, data
+    global bot, eventtype, eventid, data
     client = AsyncHTTPClient()
     res = yield client.fetch("http://127.0.0.1:{}/event/now".format(options.port))
     if(res.code is not 200):
@@ -39,13 +39,14 @@ def checkcall():
     data = json.loads(res.body.decode("utf-8"))
     if(data["result"]["comm_data"]):
         eventtype = data["result"]["comm_data"]["type"]
+        eventid = data["result"]["comm_data"]["id"]
         botperiod = 15 * 60 * 1000
 
         if(not bot):
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
             bot.start()
             main()
-        else:
+        elif(not bot.is_running()):
             bot.start()
     else:
         if(bot):
@@ -74,14 +75,28 @@ def main():
     }
     response, msg = yield from client.call("/load/index", args, None)
     if(data["result"]["comm_data"]["type"] == 'Medley'):
-        yield from getMedleyRank(client, parsePointDisp())
+        yield from getMedleyRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
-        yield from getAtaponRank(client, parsePointDisp())
+        yield from getAtaponRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
-        yield from getTourRank(client, parsePointDisp())
+        yield from getTourRank(client, parseScoreDisp())
 
 
 def parsePointDisp():
+    event_type = None
+    if(data["result"]["comm_data"]["type"] == 'Medley'):
+        event_type = "medley"
+    elif(data["result"]["comm_data"]["type"] == 'Atapon'):
+        event_type = "atapon"
+    elif(data["result"]["comm_data"]["type"] == 'Tour'):
+        event_type = "tour"
+    if(event_type):
+        ret = []
+        for rank in data["result"][event_type]["point_rank"]["disp"]:
+            ret.append(round(int(rank["rank_max"]) / 10))
+        return ret
+        
+def parseScoreDisp():
     event_type = None
     if(data["result"]["comm_data"]["type"] == 'Medley'):
         event_type = "medley"
@@ -95,7 +110,7 @@ def parsePointDisp():
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
-def getAtaponRank(client, pointdisp):
+def getAtaponRank(client, pointdisp, scoredisp):
     args = {}
     rank_level = []
     score_level = []
@@ -108,9 +123,21 @@ def getAtaponRank(client, pointdisp):
         response, msg = yield from client.call("/event/atapon/ranking_list", args, None)
         #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
         rank_level.append(msg["data"]["ranking_list"][9]["score"])
+        
+    for rank in scoredisp:
+        args = {
+            "ranking_type": 2,
+            "page": rank
+        }
+        response, msg = yield from client.call("/event/atapon/ranking_list", args, None)
+        score_level.append(msg["data"]["ranking_list"][9]["score"])
+        
     with connection.cursor() as cursor:
         sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `leve5`) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, ("5001", rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+        cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    connection.commit()
 
 def getTourRank(client, pointdisp):
     args = {}
@@ -126,11 +153,10 @@ def getTourRank(client, pointdisp):
         score_level.append(msg["data"]["ranking_list"][9]["score"])
     with connection.cursor() as cursor:
         sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, ("5001", score_level[0], score_level[1], score_level[2]))
-
+        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
     connection.commit()
 
-def getMedleyRank(client, pointdisp):
+def getMedleyRank(client, pointdisp, scoredisp):
     args = {
         "get_effect_info": 1,
     }
@@ -145,9 +171,20 @@ def getMedleyRank(client, pointdisp):
         response, msg = yield from client.call("/event/medley/ranking_list", args, None)
         #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
         rank_level.append(msg["data"]["ranking_list"][9]["score"])
+        
+    for rank in scoredisp:
+        args = {
+            "ranking_type": 2,
+            "page": rank
+        }
+        response, msg = yield from client.call("/event/medley/ranking_list", args, None)
+        score_level.append(msg["data"]["ranking_list"][9]["score"])
     with connection.cursor() as cursor:
         sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `leve5`) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, ("5001", rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+        cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    connection.commit()
 
 if __name__ == '__main__':
     checkcall()
