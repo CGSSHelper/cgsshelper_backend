@@ -92,12 +92,13 @@ def parsePointDisp():
     if(event_type):
         ret = []
         for rank in data["result"][event_type]["score_rank"]["disp"]:
-            ret.append(round(int(rank["rank_min"]) / 10) + 1)
-        ret.append(round(int(data["result"][event_type]["score_rank"]["disp"][len(data["result"][event_type]["score_rank"]["disp"]) - 1]["rank_max"]) / 10) + 1)
+            ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
 def getAtaponRank(client, pointdisp):
     args = {}
+    rank_level = []
+    score_level = []
     response, msg = yield from client.call("/event/atapon/load", args, None)
     for rank in pointdisp:
         args = {
@@ -105,8 +106,11 @@ def getAtaponRank(client, pointdisp):
             "page": rank
         }
         response, msg = yield from client.call("/event/atapon/ranking_list", args, None)
-        print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg[
-              "data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
+        #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
+        rank_level.append(msg["data"]["ranking_list"][9]["score"])
+    with connection.cursor() as cursor:
+        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `leve5`) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, ("5001", rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
 
 def getTourRank(client, pointdisp):
     args = {}
@@ -118,12 +122,11 @@ def getTourRank(client, pointdisp):
             "page": rank
         }
         response, msg = yield from client.call("/event/tour/ranking_list", args, None)
-        print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0], msg[
-              "data"]["ranking_list"][1], msg["data"]["ranking_list"][2]))
-        score_level.append(msg["data"]["ranking_list"][0]["score"])
+        #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][7], msg["data"]["ranking_list"][8], msg["data"]["ranking_list"][9]))
+        score_level.append(msg["data"]["ranking_list"][9]["score"])
     with connection.cursor() as cursor:
-        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(sql, ("5001", score_level[0], score_level[1], score_level[2], score_level[3]))
+        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, ("5001", score_level[0], score_level[1], score_level[2]))
 
     connection.commit()
 
@@ -131,6 +134,8 @@ def getMedleyRank(client, pointdisp):
     args = {
         "get_effect_info": 1,
     }
+    rank_level = []
+    score_level = []
     response, msg = yield from client.call("/event/medley/load", args, None)
     for rank in pointdisp:
         args = {
@@ -138,8 +143,11 @@ def getMedleyRank(client, pointdisp):
             "page": rank
         }
         response, msg = yield from client.call("/event/medley/ranking_list", args, None)
-        print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg[
-              "data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
+        #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
+        rank_level.append(msg["data"]["ranking_list"][9]["score"])
+    with connection.cursor() as cursor:
+        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `leve5`) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, ("5001", rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
 
 if __name__ == '__main__':
     checkcall()
