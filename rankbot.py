@@ -47,7 +47,6 @@ def checkcall():
             main()
         else:
             bot.start()
-            main()
     else:
         if(bot):
             bot.stop()
@@ -144,5 +143,5 @@ def getMedleyRank(client, pointdisp):
 
 if __name__ == '__main__':
     checkcall()
-    tornado.ioloop.PeriodicCallback(checkcall, 10 * 60 * 1000).start()
+    tornado.ioloop.PeriodicCallback(checkcall, 60 * 60 * 1000).start()
     tornado.ioloop.IOLoop.current().start()
