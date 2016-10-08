@@ -1,5 +1,7 @@
 msgpack-python==0.4.8
 PyMySQL==0.7.9
+python-dateutil==2.5.3
 pytz==2016.6.1
 requests==2.11.1
+six==1.10.0
 tornado==4.4.2

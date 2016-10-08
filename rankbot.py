@@ -33,12 +33,7 @@ define('port', default=8888, help='run on this port', type=int)
 tornado.options.parse_command_line()
 
 # Connect to the database
-connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
-                             user=os.getenv("DB_USERNAME", 'root'),
-                             password=os.getenv("DB_PASSWORD", ''),
-                             db=os.getenv("DB_DATABASE", 'cgssh'),
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+
 
 @tornado.gen.coroutine
 def checkcall():
@@ -58,9 +53,8 @@ def checkcall():
 
         if(not bot):
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
-            bot.start()
-            main()
-        elif((not bot.is_running()) and diff_time_event < 0):
+            
+        if((not bot.is_running()) and diff_time_event < 0):
             bot.start()
         elif(diff_time_event > 0 and diff_time_result < 0):
             bot.stop()
