@@ -11,9 +11,21 @@ from tornado.options import options, define
 from tornado.httpclient import AsyncHTTPClient
 from datetime import datetime, timedelta
 from pytz import timezone
+from dateutil import parser
 import tornado.gen
 
 bot = None
+RES_VER_PATH = os.path.dirname(os.path.realpath(__file__))+'/static/res_ver'
+
+try:
+    open(RES_VER_PATH, 'r')
+except:
+    with open(RES_VER_PATH, 'w') as f:
+        f.write('10019960')
+
+with open(RES_VER_PATH, 'r') as f:
+    global VERSION
+    VERSION = f.read()
 
 define('debug', default=True, help='enable debug mode')
 define('port', default=8888, help='run on this port', type=int)
@@ -38,6 +50,8 @@ def checkcall():
         return
     data = json.loads(res.body.decode("utf-8"))
     if(data["result"]["comm_data"]):
+        diff_time_event = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_end"]))).total_seconds()
+        diff_time_result = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["result_start"]))).total_seconds()
         eventtype = data["result"]["comm_data"]["type"]
         eventid = data["result"]["comm_data"]["id"]
         botperiod = 15 * 60 * 1000
@@ -46,8 +60,12 @@ def checkcall():
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
             bot.start()
             main()
-        elif(not bot.is_running()):
+        elif((not bot.is_running()) and diff_time_event < 0):
             bot.start()
+        elif(diff_time_event > 0 and diff_time_result < 0):
+            bot.stop()
+        elif(diff_time_result > 0 and diff_time_result < 3600):
+            main()
     else:
         if(bot):
             bot.stop()
@@ -56,7 +74,7 @@ def checkcall():
 @tornado.gen.coroutine
 def main():
     user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
-    client = apiclient.ApiClient(user_id, viewer_id, udid)
+    client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
     args = {
         "campaign_data": "",
         "campaign_user": 1337,
