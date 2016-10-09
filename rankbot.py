@@ -4,6 +4,7 @@ import hashlib
 import json
 import asyncio
 import pymysql
+import subprocess
 
 from static import apiclient
 
@@ -16,6 +17,8 @@ import tornado.gen
 
 bot = None
 RES_VER_PATH = os.path.dirname(os.path.realpath(__file__))+'/static/res_ver'
+STATIC_UPDATE_EXEC = os.path.dirname(os.path.realpath(__file__))+'/static/bin/python'
+STATIC_UPDATE_SCRIPT = os.path.dirname(os.path.realpath(__file__))+'/static/main.py'
 
 define('debug', default=True, help='enable debug mode')
 define('port', default=8888, help='run on this port', type=int)
@@ -49,7 +52,7 @@ def checkcall():
 
         if(not bot):
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
-            
+            main()
         if((not bot.is_running()) and diff_time_event < 0):
             bot.start()
         elif(diff_time_event > 0 and diff_time_result < 0):
@@ -82,6 +85,12 @@ def main():
         "app_type": 0,
     }
     response, msg = yield from client.call("/load/check", args, None)
+    res_ver = msg.get("data_headers", {}).get("required_res_ver", "-1")
+    if res_ver != "-1":
+        try:
+            subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT])
+        except:
+            pass
     args = {
         "live_state": 0,
         "friend_view_time": 1467500261,
