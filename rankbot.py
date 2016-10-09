@@ -52,7 +52,7 @@ def checkcall():
 
         if(not bot):
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
-            main()
+            
         if((not bot.is_running()) and diff_time_event < 0):
             bot.start()
         elif(diff_time_event > 0 and diff_time_result < 0):
