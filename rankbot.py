@@ -17,27 +17,22 @@ import tornado.gen
 bot = None
 RES_VER_PATH = os.path.dirname(os.path.realpath(__file__))+'/static/res_ver'
 
-try:
-    open(RES_VER_PATH, 'r')
-except:
-    with open(RES_VER_PATH, 'w') as f:
-        f.write('10019960')
-
-with open(RES_VER_PATH, 'r') as f:
-    global VERSION
-    VERSION = f.read()
-
 define('debug', default=True, help='enable debug mode')
 define('port', default=8888, help='run on this port', type=int)
 
 tornado.options.parse_command_line()
 
 # Connect to the database
-
+connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
+                             user=os.getenv("DB_USERNAME", 'root'),
+                             password=os.getenv("DB_PASSWORD", ''),
+                             db=os.getenv("DB_DATABASE", 'cgssh'),
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
 @tornado.gen.coroutine
 def checkcall():
-    global bot, eventtype, eventid, data
+    global bot, eventtype, eventid, data, VERSION
     client = AsyncHTTPClient()
     res = yield client.fetch("http://127.0.0.1:{}/event/now".format(options.port))
     if(res.code is not 200):
@@ -50,6 +45,7 @@ def checkcall():
         eventtype = data["result"]["comm_data"]["type"]
         eventid = data["result"]["comm_data"]["id"]
         botperiod = 15 * 60 * 1000
+        VERSION = getVersion()
 
         if(not bot):
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
@@ -64,6 +60,16 @@ def checkcall():
         if(bot):
             bot.stop()
 
+
+def getVersion():
+    try:
+        open(RES_VER_PATH, 'r')
+    except:
+        with open(RES_VER_PATH, 'w') as f:
+            f.write('10019960')
+
+    with open(RES_VER_PATH, 'r') as f:
+        return f.read()
 
 @tornado.gen.coroutine
 def main():
