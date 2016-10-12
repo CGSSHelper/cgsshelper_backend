@@ -62,7 +62,12 @@ def checkcall():
         elif(diff_time_result > 0 and diff_time_result < 600):
             main()
     else:
-        if(bot):
+        res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
+        data = json.loads(res.body.decode("utf-8"))
+        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_start"]))).total_seconds()
+        if (diff_time_start > 0):
+            main()
+        elif(bot):
             bot.stop()
 
 
