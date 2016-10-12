@@ -21,11 +21,13 @@ class EventAllHandler(BaseHandler):
 class EventDetailHandler(BaseHandler):
 
     def get(self, event_id):
-        with open(os.path.dirname(__file__) + os.getenv("STATIC_DIR", "/../static/") +
-                  "dest/master/event_data.csv", "r", encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            event = list(
-                filter(lambda row: row["id"] == event_id, reader))[0]
+        event = getEventCommData(event_id)
+        if(event["comm_data"] == {}):
+            self.write(event)
+            return
+
+        event["detail"] = {}
+        event["detail"]["available"] = getDataFromCSV("event_available", event_id)
         self.write(event)
 
 
@@ -40,28 +42,20 @@ class EventNowHandler(BaseHandler):
             for row in reader:
                 if(timezone('Asia/Tokyo').localize(datetime.strptime(row["event_start"], "%Y-%m-%d %H:%M:%S")) < localtime_japan and
                    timezone('Asia/Tokyo').localize(datetime.strptime(row["result_end"], "%Y-%m-%d %H:%M:%S")) > localtime_japan and not "2099" in row["result_end"]):
-                    event["comm_data"] = row
-        if("comm_data" not in event):
+                    event_id = row["id"]
+        try:
+            event = getEventCommData(event_id)
+        except NameError:
             self.write({"comm_data": {}})
-            return
-        event_id = event["comm_data"]["id"]
-        event["comm_data"]["bg_url"] = "/static/card/card_bg_{0}/bg_{0}.png".format(event["comm_data"]["bg_id"])
-        event["comm_data"]["notice_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["notice_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["calc_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["calc_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["event_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["event_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["result_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["result_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["second_half_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["second_half_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
 
-        if(event["comm_data"]["type"] == "2"):
+        if(event["comm_data"]["type"] == "Caravan"):
             # caravan event
             event["caravan"] = {
                 "daily_bonus": getDataFromCSV("caravan_data", event_id),
                 "detail": getDataFromCSV("caravan_detail", event_id)
             }
 
-        if(event["comm_data"]["type"] == "1"):
+        if(event["comm_data"]["type"] == "Atapon"):
             # atapon event
             event["atapon"] = {
                 "story_detail": getDataFromCSV("atapon_story_detail", event_id),
@@ -77,7 +71,7 @@ class EventNowHandler(BaseHandler):
                 "point_reward": getDataFromCSV("atapon_point_reward", event_id)
             }
 
-        if(event["comm_data"]["type"] == "3"):
+        if(event["comm_data"]["type"] == "Medley"):
             # medley event
             event["medley"] = {
                 "define": getDataFromCSV("medley_data", event_id),
@@ -94,7 +88,7 @@ class EventNowHandler(BaseHandler):
                 "story_detail": getDataFromCSV("medley_story_detail", event_id)
             }
 
-        if(event["comm_data"]["type"] == "4"):
+        if(event["comm_data"]["type"] == "Party"):
             # party event
             event["party"] = {
                 "define": getDataFromCSV("party_data", event_id),
@@ -102,7 +96,7 @@ class EventNowHandler(BaseHandler):
                 "point_reward": getDataFromCSV("party_point_reward", event_id)
             }
 
-        if(event["comm_data"]["type"] == "5"):
+        if(event["comm_data"]["type"] == "Tour"):
             # tour (parade) event
             event["tour"] = {
                 "define": getDataFromCSV("tour_data", event_id),
@@ -114,8 +108,6 @@ class EventNowHandler(BaseHandler):
                 "story_detail": getDataFromCSV("tour_story_detail", event_id)
             }
 
-        event["comm_data"]["type"] = types[int(event["comm_data"]["type"])]
-
         self.write(event)
 
 class EventNextHandler(BaseHandler):
@@ -124,25 +116,34 @@ class EventNextHandler(BaseHandler):
         with open(os.path.dirname(__file__) + os.getenv("STATIC_DIR", "/../static/") +
                   "dest/master/event_data.csv", "r", encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            event = {}
             localtime_japan = datetime.now(timezone('Asia/Tokyo'))
             for row in reader:
                 if(timezone('Asia/Tokyo').localize(datetime.strptime(row["notice_start"], "%Y-%m-%d %H:%M:%S")) < localtime_japan and
                    "2099" in row["result_end"]):
-                    event["comm_data"] = row
-        if("comm_data" not in event):
+                    event_id = row["id"]
+        try:
+            self.write(getEventCommData(event_id))
+        except NameError:
             self.write({"comm_data": {}})
-            return
-        event["comm_data"]["bg_url"] = "/static/card/card_bg_{0}/bg_{0}.png".format(event["comm_data"]["bg_id"])
-        event["comm_data"]["notice_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["notice_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["calc_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["calc_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["event_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["event_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["result_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["result_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["second_half_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["second_half_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
-        event["comm_data"]["type"] = types[int(event["comm_data"]["type"])]
-        self.write(event)
+
+
+def getEventCommData(event_id):
+    with open(os.path.dirname(__file__) + os.getenv("STATIC_DIR", "/../static/") + "dest/master/event_data.csv", "r", encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        event = {}
+        event["comm_data"] = list(filter(lambda row: row["id"] == event_id, reader))[0]
+    if("comm_data" not in event):
+        return {"comm_data": {}}
+    event["comm_data"]["bg_url"] = "/static/card/card_bg_{0}/bg_{0}.png".format(event["comm_data"]["bg_id"])
+    event["comm_data"]["notice_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["notice_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["calc_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["calc_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["event_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["event_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["event_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["result_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["result_end"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["result_end"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["second_half_start"] = timezone('Asia/Tokyo').localize(datetime.strptime(event["comm_data"]["second_half_start"], "%Y-%m-%d %H:%M:%S")).isoformat()
+    event["comm_data"]["type"] = types[int(event["comm_data"]["type"])]
+    return event
 
 def getDataFromCSV(filename="", event_id=0):
     with open(os.path.dirname(__file__) + os.getenv("STATIC_DIR", "/../static/") +
