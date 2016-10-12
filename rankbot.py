@@ -66,6 +66,7 @@ def checkcall():
         data = json.loads(res.body.decode("utf-8"))
         diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
         if (diff_time_start > 0):
+            VERSION = getVersion()
             main()
         elif(bot):
             bot.stop()
