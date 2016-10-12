@@ -49,6 +49,9 @@ def checkcall():
         eventtype = data["result"]["comm_data"]["type"]
         eventid = data["result"]["comm_data"]["id"]
         VERSION = getVersion()
+        
+        if(data["result"]["comm_data"]["type"] == 'Party' or data["result"]["comm_data"]["type"] == 'Cavaran'):
+            pass
 
         if(not bot):
             botperiod = 15 * 60 * 1000
@@ -116,8 +119,6 @@ def main():
         yield from getAtaponRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
         yield from getTourRank(client, parseScoreDisp())
-    elif(data["result"]["comm_data"]["type"] == 'Party'):
-        yield from getPartyRank(client, parsePointDisp())
 
 
 def parsePointDisp():
@@ -128,8 +129,6 @@ def parsePointDisp():
         event_type = "atapon"
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
         event_type = "tour"
-    elif(data["result"]["comm_data"]["type"] == 'Party'):
-        event_type = "party"
     if(event_type):
         ret = []
         for rank in data["result"][event_type]["point_rank"]["disp"]:
@@ -224,24 +223,6 @@ def getMedleyRank(client, pointdisp, scoredisp):
         cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
         sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
         cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
-    connection.commit()
-    
-def getPartyRank(client, pointdisp):
-    args = {}
-    rank_level = []
-    response, msg = yield from client.call("/event/party/load", args, None)
-    for rank in pointdisp:
-        args = {
-            "ranking_type": 1,
-            "page": rank
-        }
-        response, msg = yield from client.call("/event/party/ranking_list", args, None)
-        #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
-        rank_level.append(msg["data"]["ranking_list"][9]["score"])
-        
-    with connection.cursor() as cursor:
-        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
     connection.commit()
 
 if __name__ == '__main__':
