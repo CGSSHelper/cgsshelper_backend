@@ -68,7 +68,7 @@ def checkcall():
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data = json.loads(res.body.decode("utf-8"))
         diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
-        if (diff_time_start > 0):
+        if (diff_time_start < -600):
             VERSION = getVersion()
             main()
         elif(bot):
@@ -99,7 +99,7 @@ def main():
     res_ver = msg.get("data_headers", {}).get("required_res_ver", "-1")
     if res_ver != "-1":
         try:
-            subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT])
+            subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
             return
         except:
             pass
