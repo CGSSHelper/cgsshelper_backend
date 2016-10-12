@@ -51,7 +51,7 @@ def checkcall():
         VERSION = getVersion()
         
         if(data["result"]["comm_data"]["type"] == 'Party' or data["result"]["comm_data"]["type"] == 'Cavaran'):
-            pass
+            return
 
         if(not bot):
             botperiod = 15 * 60 * 1000
