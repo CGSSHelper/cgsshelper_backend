@@ -40,6 +40,7 @@ class EventNowHandler(BaseHandler):
             event = {}
             localtime_japan = datetime.now(timezone('Asia/Tokyo'))
             for row in reader:
+                print(row)
                 if(timezone('Asia/Tokyo').localize(datetime.strptime(row["event_start"], "%Y-%m-%d %H:%M:%S")) < localtime_japan and
                    timezone('Asia/Tokyo').localize(datetime.strptime(row["result_end"], "%Y-%m-%d %H:%M:%S")) > localtime_japan and not "2099" in row["result_end"]):
                     event_id = row["id"]
@@ -47,6 +48,7 @@ class EventNowHandler(BaseHandler):
             event = getEventCommData(event_id)
         except NameError:
             self.write({"comm_data": {}})
+            return
 
         if(event["comm_data"]["type"] == "Caravan"):
             # caravan event
