@@ -66,9 +66,9 @@ def checkcall():
             main()
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
-        data = json.loads(res.body.decode("utf-8"))
-        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
-        if (diff_time_start < -600):
+        data2 = json.loads(res.body.decode("utf-8"))
+        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
+        if (not data and not data2):
             VERSION = getVersion()
             main()
         elif(bot):
@@ -84,9 +84,9 @@ def getVersion():
 
     with open(RES_VER_PATH, 'r') as f:
         return f.read()
-
+        
 @tornado.gen.coroutine
-def main():
+def call_update():
     user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
     client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
     args = {
@@ -102,7 +102,19 @@ def main():
             subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
             return
         except:
-            pass
+            return
+
+@tornado.gen.coroutine
+def main():
+    user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
+    client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
+    args = {
+        "campaign_data": "",
+        "campaign_user": 1337,
+        "campaign_sign": hashlib.md5(b"All your APIs are belong to us").hexdigest(),
+        "app_type": 0,
+    }
+    response, msg = yield from client.call("/load/check", args, None)
     args = {
         "live_state": 0,
         "friend_view_time": 1467640563,
@@ -161,7 +173,10 @@ def getAtaponRank(client, pointdisp, scoredisp):
         }
         response, msg = yield from client.call("/event/atapon/ranking_list", args, None)
         #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
-        rank_level.append(msg["data"]["ranking_list"][9]["score"])
+        try:
+            rank_level.append(msg["data"]["ranking_list"][9]["score"])
+        except IndexError:
+            rank_level.append(0)
         
     for rank in scoredisp:
         args = {
@@ -169,7 +184,10 @@ def getAtaponRank(client, pointdisp, scoredisp):
             "page": rank
         }
         response, msg = yield from client.call("/event/atapon/ranking_list", args, None)
-        score_level.append(msg["data"]["ranking_list"][9]["score"])
+        try:
+            score_level.append(msg["data"]["ranking_list"][9]["score"])
+        except IndexError:
+            score_level.append(0)
         
     with connection.cursor() as cursor:
         sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
@@ -227,5 +245,5 @@ def getMedleyRank(client, pointdisp, scoredisp):
 
 if __name__ == '__main__':
     checkcall()
-    tornado.ioloop.PeriodicCallback(checkcall, 10 * 60 * 1000).start()
+    tornado.ioloop.PeriodicCallback(checkcall, 15 * 60 * 1000).start()
     tornado.ioloop.IOLoop.current().start()
