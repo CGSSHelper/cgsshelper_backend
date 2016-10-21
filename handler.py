@@ -1,6 +1,6 @@
 from handlers.MainHandler import MainHandler
 from handlers.EventHandler import EventAllHandler, EventDetailHandler, EventNowHandler, EventNextHandler
-from handlers.CardHandler import CardAllHandler, CharaAllHandler, CardDetailHandler
+from handlers.CardHandler import CardAllHandler, CharaAllHandler, CardDetailHandler, CardGachaHandler
 import tornado
 import os
 import io
@@ -31,6 +31,7 @@ endpoints = [
     (r"/event/next", EventNextHandler),
     (r"/card/all", CardAllHandler),
     (r"/card/(\d{6})", CardDetailHandler),
+    (r"/card/gacha", CardGachaHandler),
     (r"/chara/all", CharaAllHandler),
     (r'/static/(.*)', myFileHandler, {'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/dest/')}),
 ]
