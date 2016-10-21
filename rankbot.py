@@ -100,21 +100,25 @@ def call_update():
     if res_ver != "-1":
         try:
             subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
-            return
+            return 1
         except:
-            return
+            return 1
+    else:
+        return 0
 
 @tornado.gen.coroutine
 def main():
-    user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
-    client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
-    args = {
-        "campaign_data": "",
-        "campaign_user": 1337,
-        "campaign_sign": hashlib.md5(b"All your APIs are belong to us").hexdigest(),
-        "app_type": 0,
-    }
-    response, msg = yield from client.call("/load/check", args, None)
+    if(call_update()):
+        # just like a game client
+        user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
+        client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
+        args = {
+            "campaign_data": "",
+            "campaign_user": 1337,
+            "campaign_sign": hashlib.md5(b"All your APIs are belong to us").hexdigest(),
+            "app_type": 0,
+        }
+        response, msg = yield from client.call("/load/check", args, None)
     args = {
         "live_state": 0,
         "friend_view_time": 1467640563,
