@@ -45,13 +45,39 @@ class CardGachaHandler(BaseHandler):
             "probability": [88.5, 10, 1.5],
             "must": true
         }
+        TODO: card groups, card filter
         '''
+
         params = tornado.escape.json_decode(self.request.body)
         total_probability = math.ceil(sum(params["probability"]))
         if total_probability != 100 or len(params["probability"]) is not 3:
             self.set_status(500)
             self.write({"code": 1, "msg": "Invalid argument"})
             return
+
+        def normal_gacha(cards, type, p):
+            rarity = [[1, 3, 5], [3, 5, 7], [5, 7]]
+            minp, minj = heapq.heappop(p)
+            # print((is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9), is_must_fulfilled, i)
+            sel_rarity = rarity[type][minj]
+            # minj = minj if (is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9) else 1
+            # is_must_fulfilled = True if sel_rarity > 4 or is_must_fulfilled else False
+            selection = list(card for card in cards if (int(card["rarity"]) == sel_rarity))
+            result.append(minj)
+            heapq.heappush(p, (randoms[minj].normalvariate(
+                1. / wtp[minj], 1. / wtp[minj] / 3.) + minp, minj))
+            return selection
+
+        def must_gacha(cards):
+            probability = [10, 1.5]
+            wtp = [1. * x / sum(probability) for x in probability]
+            randoms = []
+            p = []
+            for i, x in enumerate(wtp):
+                randoms.append(random)
+                p.append((randoms[i].normalvariate(1. / x, 1. / x / 3.), i))
+            heapq.heapify(p)
+            return normal_gacha(cards, 2, p)
 
         with open(os.path.dirname(__file__) + os.getenv("STATIC_DIR", "/../static/") +
                   "dest/master/card_data.csv", "r", encoding='utf-8') as f:
@@ -63,7 +89,6 @@ class CardGachaHandler(BaseHandler):
         # credit: http://huangwei.pro/2015-07/game-random/
         # with in-game probability, the SSR is really super super rare!
         gacha_cards = []
-        rarity = [[1, 3, 5], [3, 5, 7]]
         wtp = [1. * x / sum(params["probability"]) for x in params["probability"]]
         result = []
         randoms = []
@@ -74,16 +99,14 @@ class CardGachaHandler(BaseHandler):
         heapq.heapify(p)
         is_must_fulfilled = False if params["must"] else True
         for i in range(params["amount"]):
-            minp, minj = heapq.heappop(p)
             print((is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9), is_must_fulfilled, i)
-            sel_rarity = rarity[params["type"]][minj] if (is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9) else 5
-            minj = minj if (is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9) else 1
-            is_must_fulfilled = True if sel_rarity > 4 or is_must_fulfilled else False
-            selection = list(card for card in cards if (int(card["rarity"]) == sel_rarity))
-            result.append(minj)
-            gacha_cards.append(random.choice(selection)["id"])
-            heapq.heappush(p, (randoms[minj].normalvariate(
-                1. / wtp[minj], 1. / wtp[minj] / 3.) + minp, minj))
+            if (is_must_fulfilled and i == 9) or (is_must_fulfilled or i != 9):
+                selection = normal_gacha(cards, params["type"], p)
+                is_must_fulfilled = True if int(selection[0]["rarity"]) > 4 or is_must_fulfilled else False
+                gacha_cards.append(random.choice(selection)["id"])
+            else:
+                selection = must_gacha(cards)
+                gacha_cards.append(random.choice(selection)["id"])
 
         random.shuffle(gacha_cards)
         self.write(gacha_cards)
