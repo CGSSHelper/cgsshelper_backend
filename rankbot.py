@@ -148,7 +148,8 @@ def parsePointDisp():
         event_type = "tour"
     if(event_type):
         ret = []
-        for rank in data["result"][event_type]["point_rank"]["disp"]:
+        for i in range(5):
+            rank = data["result"][event_type]["point_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
         
@@ -162,7 +163,8 @@ def parseScoreDisp():
         event_type = "tour"
     if(event_type):
         ret = []
-        for rank in data["result"][event_type]["score_rank"]["disp"]:
+        for i in range(3):
+            rank = data["result"][event_type]["score_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
