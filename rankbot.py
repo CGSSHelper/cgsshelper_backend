@@ -25,14 +25,6 @@ define('port', default=8888, help='run on this port', type=int)
 
 tornado.options.parse_command_line()
 
-# Connect to the database
-connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
-                             user=os.getenv("DB_USERNAME", 'root'),
-                             password=os.getenv("DB_PASSWORD", ''),
-                             db=os.getenv("DB_DATABASE", 'cgssh'),
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
-
 @tornado.gen.coroutine
 def checkcall():
     global bot, eventtype, eventid, data, VERSION
@@ -67,8 +59,8 @@ def checkcall():
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
-        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
-        if (not data and not data2):
+        # diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
+        if (not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
             VERSION = getVersion()
             main()
         elif(bot):
@@ -129,13 +121,22 @@ def main():
         "tutorial_flag": 1000
     }
     response, msg = yield from client.call("/load/index", args, None)
+    
+    # Connect to the database
+    global connection
+    connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
+                             user=os.getenv("DB_USERNAME", 'root'),
+                             password=os.getenv("DB_PASSWORD", ''),
+                             db=os.getenv("DB_DATABASE", 'cgssh'),
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
     if(data["result"]["comm_data"]["type"] == 'Medley'):
         yield from getMedleyRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
         yield from getAtaponRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
         yield from getTourRank(client, parseScoreDisp())
-
+    connection.close()
 
 def parsePointDisp():
     event_type = None
