@@ -65,7 +65,7 @@ class CardGachaHandler(BaseHandler):
             selection = list(card for card in cards if (int(card["rarity"]) == sel_rarity))
             result.append(minj)
             heapq.heappush(p, (randoms[minj].normalvariate(
-                1. / wtp[minj], 1. / wtp[minj] / 3.) + minp, minj))
+                1. / wtp[minj], 1. / wtp[minj] / 2.) + minp, minj))
             return selection
 
         def must_gacha(cards):
@@ -75,7 +75,7 @@ class CardGachaHandler(BaseHandler):
             p = []
             for i, x in enumerate(wtp):
                 randoms.append(random)
-                p.append((randoms[i].normalvariate(1. / x, 1. / x / 3.), i))
+                p.append((randoms[i].normalvariate(1. / x, 1. / x / 2.), i))
             heapq.heapify(p)
             return normal_gacha(cards, 2, p)
 
@@ -95,7 +95,7 @@ class CardGachaHandler(BaseHandler):
         p = []
         for i, x in enumerate(wtp):
             randoms.append(random)
-            p.append((randoms[i].normalvariate(1. / x, 1. / x / 3.), i))
+            p.append((randoms[i].normalvariate(1. / x, 1. / x / 2.), i))
         heapq.heapify(p)
         is_must_fulfilled = False if params["must"] else True
         for i in range(params["amount"]):
