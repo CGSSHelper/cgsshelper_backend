@@ -1,4 +1,6 @@
+aiomysql==0.0.9
 msgpack-python==0.4.8
+Pillow==3.4.2
 PyMySQL==0.7.9
 python-dateutil==2.5.3
 pytz==2016.6.1
