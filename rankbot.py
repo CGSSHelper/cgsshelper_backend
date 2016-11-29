@@ -54,7 +54,7 @@ def checkcall():
             bot.start()
         elif(diff_time_event > 0 and diff_time_result < 0):
             bot.stop()
-        elif(diff_time_result > 0 and diff_time_result < 600):
+        elif(diff_time_result > 0 and diff_time_result < 900):
             main()
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
