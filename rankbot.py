@@ -59,8 +59,8 @@ def checkcall():
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
-        # diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
-        if (not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
+        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
+        if diff_time_start <= 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
             VERSION = getVersion()
             main()
         elif(bot):
