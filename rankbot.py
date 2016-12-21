@@ -41,14 +41,14 @@ def checkcall():
         eventtype = data["result"]["comm_data"]["type"]
         eventid = data["result"]["comm_data"]["id"]
         VERSION = getVersion()
-        
+
         if(data["result"]["comm_data"]["type"] == 'Party' or data["result"]["comm_data"]["type"] == 'Cavaran'):
             return
 
         if(not bot):
             botperiod = 15 * 60 * 1000
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
-            
+
         if((not bot.is_running()) and diff_time_event < 0):
             main()
             bot.start()
@@ -59,8 +59,8 @@ def checkcall():
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
-        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099','2016')))).total_seconds()
-        if diff_time_start <= 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
+        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099',str(datetime.now(timezone('Asia/Tokyo')).year))))).total_seconds()
+        if diff_time_start > 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
             VERSION = getVersion()
             main()
         elif(bot):
@@ -76,7 +76,7 @@ def getVersion():
 
     with open(RES_VER_PATH, 'r') as f:
         return f.read()
-        
+
 @tornado.gen.coroutine
 def call_update():
     user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
@@ -121,7 +121,7 @@ def main():
         "tutorial_flag": 1000
     }
     response, msg = yield from client.call("/load/index", args, None)
-    
+
     # Connect to the database
     global connection
     connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
@@ -152,7 +152,7 @@ def parsePointDisp():
             rank = data["result"][event_type]["point_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
-        
+
 def parseScoreDisp():
     event_type = None
     if(data["result"]["comm_data"]["type"] == 'Medley'):
@@ -184,7 +184,7 @@ def getAtaponRank(client, pointdisp, scoredisp):
             rank_level.append(msg["data"]["ranking_list"][9]["score"])
         except IndexError:
             rank_level.append(0)
-        
+
     for rank in scoredisp:
         args = {
             "ranking_type": 2,
@@ -195,7 +195,7 @@ def getAtaponRank(client, pointdisp, scoredisp):
             score_level.append(msg["data"]["ranking_list"][9]["score"])
         except IndexError:
             score_level.append(0)
-        
+
     with connection.cursor() as cursor:
         sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
         cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
@@ -235,7 +235,7 @@ def getMedleyRank(client, pointdisp, scoredisp):
         response, msg = yield from client.call("/event/medley/ranking_list", args, None)
         #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][0]["user_info"], msg["data"]["ranking_list"][1]["user_info"], msg["data"]["ranking_list"][2]["user_info"]))
         rank_level.append(msg["data"]["ranking_list"][9]["score"])
-        
+
     for rank in scoredisp:
         args = {
             "ranking_type": 2,
