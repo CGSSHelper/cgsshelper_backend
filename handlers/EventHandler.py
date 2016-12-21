@@ -50,6 +50,67 @@ class EventDetailHandler(BaseHandler):
         event["detail"] = {}
         event["detail"]["available"] = getDataFromCSV(
             "event_available", event_id)
+
+        if(event["comm_data"]["type"] == "Caravan"):
+            # caravan event
+            event["detail"]["caravan"] = {
+                "daily_bonus": getDataFromCSV("caravan_data", event_id),
+                "detail": getDataFromCSV("caravan_detail", event_id)
+            }
+
+        if(event["comm_data"]["type"] == "Atapon"):
+            # atapon event
+            event["detail"]["atapon"] = {
+                "story_detail": getDataFromCSV("atapon_story_detail", event_id),
+                "live_detail": getDataFromCSV("atapon_detail", event_id),
+                "point_rank": {
+                    "disp": getDataFromCSV("atapon_point_rank_disp", event_id),
+                    "reward": getDataFromCSV("atapon_point_rank_reward", event_id)
+                },
+                "score_rank": {
+                    "disp": getDataFromCSV("atapon_score_rank_disp", event_id),
+                    "reward": getDataFromCSV("atapon_score_rank_reward", event_id)
+                },
+                "point_reward": getDataFromCSV("atapon_point_reward", event_id)
+            }
+
+        if(event["comm_data"]["type"] == "Medley"):
+            # medley event
+            event["detail"]["medley"] = {
+                "define": getDataFromCSV("medley_data", event_id),
+                "detail": getDataFromCSV("medley_detail", event_id),
+                "point_reward": getDataFromCSV("medley_point_reward", event_id),
+                "score_rank": {
+                    "disp": getDataFromCSV("medley_score_rank_disp", event_id),
+                    "reward": getDataFromCSV("medley_score_rank_reward", event_id)
+                },
+                "point_rank": {
+                    "disp": getDataFromCSV("medley_point_rank_disp", event_id),
+                    "reward": getDataFromCSV("medley_point_rank_reward", event_id)
+                },
+                "story_detail": getDataFromCSV("medley_story_detail", event_id)
+            }
+
+        if(event["comm_data"]["type"] == "Party"):
+            # party event
+            event["detail"]["party"] = {
+                "define": getDataFromCSV("party_data", event_id),
+                "detail": getDataFromCSV("party_detail", event_id),
+                "point_reward": getDataFromCSV("party_point_reward", event_id)
+            }
+
+        if(event["comm_data"]["type"] == "Tour"):
+            # tour (parade) event
+            event["detail"]["tour"] = {
+                "define": getDataFromCSV("tour_data", event_id),
+                "point_reward": getDataFromCSV("tour_point_reward", event_id),
+                "score_rank": {
+                    "disp": getDataFromCSV("tour_score_rank_disp", event_id),
+                    "reward": getDataFromCSV("tour_score_rank_reward", event_id)
+                },
+                "story_detail": getDataFromCSV("tour_story_detail", event_id)
+            }
+
         self.write(event)
 
 
@@ -70,66 +131,6 @@ class EventNowHandler(BaseHandler):
         except NameError:
             self.write({"comm_data": {}})
             return
-
-        if(event["comm_data"]["type"] == "Caravan"):
-            # caravan event
-            event["caravan"] = {
-                "daily_bonus": getDataFromCSV("caravan_data", event_id),
-                "detail": getDataFromCSV("caravan_detail", event_id)
-            }
-
-        if(event["comm_data"]["type"] == "Atapon"):
-            # atapon event
-            event["atapon"] = {
-                "story_detail": getDataFromCSV("atapon_story_detail", event_id),
-                "live_detail": getDataFromCSV("atapon_detail", event_id),
-                "point_rank": {
-                    "disp": getDataFromCSV("atapon_point_rank_disp", event_id),
-                    "reward": getDataFromCSV("atapon_point_rank_reward", event_id)
-                },
-                "score_rank": {
-                    "disp": getDataFromCSV("atapon_score_rank_disp", event_id),
-                    "reward": getDataFromCSV("atapon_score_rank_reward", event_id)
-                },
-                "point_reward": getDataFromCSV("atapon_point_reward", event_id)
-            }
-
-        if(event["comm_data"]["type"] == "Medley"):
-            # medley event
-            event["medley"] = {
-                "define": getDataFromCSV("medley_data", event_id),
-                "detail": getDataFromCSV("medley_detail", event_id),
-                "point_reward": getDataFromCSV("medley_point_reward", event_id),
-                "score_rank": {
-                    "disp": getDataFromCSV("medley_score_rank_disp", event_id),
-                    "reward": getDataFromCSV("medley_score_rank_reward", event_id)
-                },
-                "point_rank": {
-                    "disp": getDataFromCSV("medley_point_rank_disp", event_id),
-                    "reward": getDataFromCSV("medley_point_rank_reward", event_id)
-                },
-                "story_detail": getDataFromCSV("medley_story_detail", event_id)
-            }
-
-        if(event["comm_data"]["type"] == "Party"):
-            # party event
-            event["party"] = {
-                "define": getDataFromCSV("party_data", event_id),
-                "detail": getDataFromCSV("party_detail", event_id),
-                "point_reward": getDataFromCSV("party_point_reward", event_id)
-            }
-
-        if(event["comm_data"]["type"] == "Tour"):
-            # tour (parade) event
-            event["tour"] = {
-                "define": getDataFromCSV("tour_data", event_id),
-                "point_reward": getDataFromCSV("tour_point_reward", event_id),
-                "score_rank": {
-                    "disp": getDataFromCSV("tour_score_rank_disp", event_id),
-                    "reward": getDataFromCSV("tour_score_rank_reward", event_id)
-                },
-                "story_detail": getDataFromCSV("tour_story_detail", event_id)
-            }
 
         self.write(event)
 
