@@ -3,10 +3,11 @@ import os
 import hashlib
 import json
 import asyncio
-import pymysql
 import subprocess
+import re
 
 from static import apiclient
+from handlers import database
 
 from tornado.options import options, define
 from tornado.httpclient import AsyncHTTPClient
@@ -49,12 +50,13 @@ def checkcall():
             botperiod = 15 * 60 * 1000
             bot = tornado.ioloop.PeriodicCallback(main, botperiod)
 
-        if((not bot.is_running()) and diff_time_event < 0):
+        if((not bot.is_running()) and diff_time_event <= 0):
             main()
             bot.start()
-        elif(diff_time_event > 0 and diff_time_result < 0):
+        elif(diff_time_event > 0 and diff_time_result <= 0):
             bot.stop()
-        elif(diff_time_result > 0 and diff_time_result < 900):
+            main()
+        elif(diff_time_result > 0 and diff_time_result <= 900):
             main()
     else:
         res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
@@ -63,8 +65,11 @@ def checkcall():
         if diff_time_start > 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
             VERSION = getVersion()
             main()
-        elif(bot):
+        elif(bot.is_running()):
             bot.stop()
+        else:
+            # check update all the time
+            call_update()
 
 
 def getVersion():
@@ -91,16 +96,26 @@ def call_update():
     res_ver = msg.get("data_headers", {}).get("required_res_ver", "-1")
     if res_ver != "-1":
         try:
-            subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
+            res_run = subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
+            res_run.check_returncode()
             return 1
         except:
-            return 1
+            # maybe game server down or version update
+            client = AsyncHTTPClient()
+            res = yield client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
+            match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.decode('utf8'), re.M)
+            if(len(match_ver)):
+                os.environ['VC_APP_VER'] = match_ver
+                return 1
+            else:
+                return -1
     else:
         return 0
 
 @tornado.gen.coroutine
 def main():
-    if(call_update()):
+    update_res = call_update()
+    if(update_res is 1):
         # just like a game client
         user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
         client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
@@ -111,6 +126,9 @@ def main():
             "app_type": 0,
         }
         response, msg = yield from client.call("/load/check", args, None)
+    elif(update_res is -1):
+        # error
+        return
     args = {
         "live_state": 0,
         "friend_view_time": 1467640563,
@@ -124,12 +142,7 @@ def main():
 
     # Connect to the database
     global connection
-    connection = pymysql.connect(host=os.getenv("DB_HOST", 'localhost'),
-                             user=os.getenv("DB_USERNAME", 'root'),
-                             password=os.getenv("DB_PASSWORD", ''),
-                             db=os.getenv("DB_DATABASE", 'cgssh'),
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+    connection = database.connect()
     if(data["result"]["comm_data"]["type"] == 'Medley'):
         yield from getMedleyRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
