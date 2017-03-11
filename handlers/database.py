@@ -1,4 +1,4 @@
-import pymysql
+# import pymysql
 import aiomysql
 import asyncio
 import os
@@ -26,12 +26,17 @@ conn_params = dict(host=os.getenv("DB_HOST", 'localhost'),
                    user=os.getenv("DB_USERNAME", 'root'),
                    password=os.getenv("DB_PASSWORD", ''),
                    db=os.getenv("DB_DATABASE", 'cgssh'),
-                   cursorclass=aiomysql.DictCursor)
+                   cursorclass=aiomysql.DictCursor,
+                   autocommit=True)
 
 
 @asyncio.coroutine
 def execute(sql, sql_args):
-    pool = yield from aiomysql.create_pool(**conn_params)
+    global pool
+    try:
+        not pool
+    except NameError:
+        pool = yield from aiomysql.create_pool(**conn_params)
     with (yield from pool) as conn:
         cur = yield from conn.cursor()
         yield from cur.execute(sql, sql_args)

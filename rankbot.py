@@ -141,15 +141,15 @@ def main():
     response, msg = yield from client.call("/load/index", args, None)
 
     # Connect to the database
-    global connection
-    connection = database.connect()
+    # global connection
+    # connection = database.connect()
     if(data["result"]["comm_data"]["type"] == 'Medley'):
         yield from getMedleyRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
         yield from getAtaponRank(client, parsePointDisp(), parseScoreDisp())
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
         yield from getTourRank(client, parseScoreDisp())
-    connection.close()
+    # connection.close()
 
 def parsePointDisp():
     event_type = None
@@ -209,12 +209,12 @@ def getAtaponRank(client, pointdisp, scoredisp):
         except IndexError:
             score_level.append(0)
 
-    with connection.cursor() as cursor:
-        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
-        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
-    connection.commit()
+    # with connection.cursor() as cursor:
+    sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
+    database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+    sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    # connection.commit()
 
 def getTourRank(client, pointdisp):
     args = {}
@@ -228,10 +228,10 @@ def getTourRank(client, pointdisp):
         response, msg = yield from client.call("/event/tour/ranking_list", args, None)
         #print("rank:{}\n1st: {}\n2nd: {}\n3rd: {}".format(rank, msg["data"]["ranking_list"][7], msg["data"]["ranking_list"][8], msg["data"]["ranking_list"][9]))
         score_level.append(msg["data"]["ranking_list"][9]["score"])
-    with connection.cursor() as cursor:
-        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
-    connection.commit()
+    # with connection.cursor() as cursor:
+    sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    # connection.commit()
 
 def getMedleyRank(client, pointdisp, scoredisp):
     args = {
@@ -256,11 +256,11 @@ def getMedleyRank(client, pointdisp, scoredisp):
         }
         response, msg = yield from client.call("/event/medley/ranking_list", args, None)
         score_level.append(msg["data"]["ranking_list"][9]["score"])
-    with connection.cursor() as cursor:
-        sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
-        sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    # with connection.cursor() as cursor:
+    sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
+    database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+    sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
+    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
     connection.commit()
 
 if __name__ == '__main__':
