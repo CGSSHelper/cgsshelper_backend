@@ -11,13 +11,13 @@ class myFileHandler(StaticFileHandler):
 
     def validate_absolute_path(self, root, absolute_path):
         abspath = super().validate_absolute_path(root, absolute_path)
-        if ("png" in abspath) and ("image/webp" in self.request.headers.get("accept")) and (os.stat(abspath).st_size > 500000):
+        if ("png" in abspath) and ("image/webp" in self.request.headers.get("accept")) and (os.stat(abspath).st_size > 100000):
             # return png as webp to reduce size
             try:
                 os.stat(abspath.replace("png", "webp"))
             except:
                 im = Image.open(abspath).convert("RGB")
-                im.save(abspath.replace("png", "webp"), "WEBP", quality=90)
+                im.save(abspath.replace("png", "webp"), "WEBP", quality=80)
             return abspath.replace("png", "webp")
         else:
             return abspath
