@@ -102,7 +102,7 @@ def call_update():
         except:
             # maybe game server down or version update
             http_client = AsyncHTTPClient()
-            res = yield from http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
+            res = yield http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
             match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
             if(len(match_ver)):
                 os.environ['VC_APP_VER'] = match_ver
@@ -114,7 +114,7 @@ def call_update():
 
 @tornado.gen.coroutine
 def main():
-    update_res = yield from call_update()
+    update_res = yield call_update()
     if(update_res is 1 or update_res is 0):
         # just like a game client
         user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
