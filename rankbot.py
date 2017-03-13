@@ -101,7 +101,7 @@ def call_update():
         res = yield http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
         match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
         if(len(match_ver)):
-            os.environ['VC_APP_VER'] = match_ver
+            os.environ['VC_APP_VER'] = match_ver[0]
             return 1
         else:
             return -1
