@@ -93,22 +93,26 @@ def call_update():
         "app_type": 0,
     }
     response, msg = yield from client.call("/load/check", args, None)
+    result_code = msg.get("data_headers", {}).get("result_code", "0")
     res_ver = msg.get("data_headers", {}).get("required_res_ver", "-1")
+    if result_code is 204:
+        # app version update
+        http_client = AsyncHTTPClient()
+        res = yield http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
+        match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
+        if(len(match_ver)):
+            os.environ['VC_APP_VER'] = match_ver
+            return 1
+        else:
+            return -1
     if res_ver != "-1":
         try:
             res_run = subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
             res_run.check_returncode()
             return 1
         except:
-            # maybe game server down or version update
-            http_client = AsyncHTTPClient()
-            res = yield http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
-            match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
-            if(len(match_ver)):
-                os.environ['VC_APP_VER'] = match_ver
-                return 1
-            else:
-                return -1
+            # maybe game server down
+            return -1
     else:
         return 0
 
