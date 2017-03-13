@@ -102,7 +102,7 @@ def call_update():
         match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
         if(len(match_ver)):
             os.environ['VC_APP_VER'] = match_ver[0]
-            return 1
+            return 2
         else:
             return -1
     if res_ver != "-1":
@@ -130,6 +130,9 @@ def main():
             "app_type": 0,
         }
         response, msg = yield from client.call("/load/check", args, None)
+    elif(update_res is 2):
+        # should update
+        yield call_update()
     elif(update_res is -1):
         # error
         return
