@@ -28,9 +28,9 @@ tornado.options.parse_command_line()
 
 @tornado.gen.coroutine
 def checkcall():
-    global bot, eventtype, eventid, data, VERSION
-    client = AsyncHTTPClient()
-    res = yield client.fetch("http://127.0.0.1:{}/event/now".format(options.port))
+    global bot, eventtype, eventid, data, VERSION, http_client
+    http_client = AsyncHTTPClient()
+    res = yield http_client.fetch("http://127.0.0.1:{}/event/now".format(options.port))
     if(res.code is not 200):
         print("Is our server down?")
         return
@@ -59,7 +59,7 @@ def checkcall():
         elif(diff_time_result > 0 and diff_time_result <= 900):
             main()
     else:
-        res = yield client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
+        res = yield http_client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
         diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099',str(datetime.now(timezone('Asia/Tokyo')).year))))).total_seconds()
         if diff_time_start > 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
@@ -97,7 +97,6 @@ def call_update():
     res_ver = msg.get("data_headers", {}).get("required_res_ver", "-1")
     if result_code is 204:
         # app version update
-        http_client = AsyncHTTPClient()
         res = yield http_client.fetch("https://play.google.com/store/apps/details?id=jp.co.bandainamcoent.BNEI0242")
         match_ver = re.findall(r'itemprop="softwareVersion"> (\d{1}\.\d{1}\.\d{1})  </div>', res.body.decode('utf8'), re.M)
         if(len(match_ver)):
@@ -165,7 +164,7 @@ def parsePointDisp():
         event_type = "tour"
     if(event_type):
         ret = []
-        res = yield client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
+        res = yield http_client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
         data3 = json.loads(res.body.decode("utf-8"))
         for i in range(5):
             rank = data3["result"]["detail"]["point_rank"]["disp"][i]
@@ -182,7 +181,7 @@ def parseScoreDisp():
         event_type = "tour"
     if(event_type):
         ret = []
-        res = yield client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
+        res = yield http_client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
         data3 = json.loads(res.body.decode("utf-8"))
         for i in range(3):
             rank = data3["result"]["detail"]["score_rank"]["disp"][i]
