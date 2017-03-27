@@ -165,8 +165,10 @@ def parsePointDisp():
         event_type = "tour"
     if(event_type):
         ret = []
+        res = yield client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
+        data3 = json.loads(res.body.decode("utf-8"))
         for i in range(5):
-            rank = data["result"][event_type]["point_rank"]["disp"][i]
+            rank = data3["result"]["detail"]["point_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
@@ -180,8 +182,10 @@ def parseScoreDisp():
         event_type = "tour"
     if(event_type):
         ret = []
+        res = yield client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
+        data3 = json.loads(res.body.decode("utf-8"))
         for i in range(3):
-            rank = data["result"][event_type]["score_rank"]["disp"][i]
+            rank = data3["result"]["detail"]["score_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
