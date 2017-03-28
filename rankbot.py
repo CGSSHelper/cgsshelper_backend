@@ -11,6 +11,8 @@ from handlers import database
 
 from tornado.options import options, define
 from tornado.httpclient import AsyncHTTPClient
+from tornado.platform.asyncio import AsyncIOMainLoop
+import asyncio
 from datetime import datetime, timedelta
 from pytz import timezone
 from dateutil import parser
@@ -149,11 +151,11 @@ def main():
     pointDisp = yield parsePointDisp()
     scoreDisp = yield parseScoreDisp()
     if(data["result"]["comm_data"]["type"] == 'Medley'):
-        yield from getMedleyRank(client, pointDisp, scoreDisp)
+        yield getMedleyRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
-        yield from getAtaponRank(client, pointDisp, scoreDisp)
+        yield getAtaponRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
-        yield from getTourRank(client, scoreDisp)
+        yield getTourRank(client, scoreDisp)
     # connection.close()
 
 @tornado.gen.coroutine
@@ -193,6 +195,7 @@ def parseScoreDisp():
         return ret
     return []
 
+@tornado.gen.coroutine
 def getAtaponRank(client, pointdisp, scoredisp):
     args = {}
     rank_level = []
@@ -223,11 +226,13 @@ def getAtaponRank(client, pointdisp, scoredisp):
 
     # with connection.cursor() as cursor:
     sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
-    database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+    yield database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
     sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    yield database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
     # connection.commit()
+    return 1
 
+@tornado.gen.coroutine
 def getTourRank(client, pointdisp):
     args = {}
     score_level = []
@@ -242,9 +247,11 @@ def getTourRank(client, pointdisp):
         score_level.append(msg["data"]["ranking_list"][9]["score"])
     # with connection.cursor() as cursor:
     sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    yield database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
     # connection.commit()
+    return 1
 
+@tornado.gen.coroutine
 def getMedleyRank(client, pointdisp, scoredisp):
     args = {
         "get_effect_info": 1,
@@ -270,12 +277,15 @@ def getMedleyRank(client, pointdisp, scoredisp):
         score_level.append(msg["data"]["ranking_list"][9]["score"])
     # with connection.cursor() as cursor:
     sql = "INSERT INTO `point_score` (`actid`, `level1`, `level2`, `level3`, `level4`, `level5`) VALUES (%s, %s, %s, %s, %s, %s)"
-    database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
+    yield database.execute(sql, (eventid, rank_level[0], rank_level[1], rank_level[2], rank_level[3], rank_level[4]))
     sql = "INSERT INTO `score_rank` (`event_id`, `level1`, `level2`, `level3`) VALUES (%s, %s, %s, %s)"
-    database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
-    connection.commit()
+    yield database.execute(sql, (eventid, score_level[0], score_level[1], score_level[2]))
+    # connection.commit()
+    return 1
 
 if __name__ == '__main__':
+    AsyncIOMainLoop().install()
     checkcall()
-    tornado.ioloop.PeriodicCallback(checkcall, 15 * 60 * 1000).start()
-    tornado.ioloop.IOLoop.current().start()
+    tornado.ioloop.PeriodicCallback(checkcall, 10 * 1000).start()
+    # tornado.ioloop.IOLoop.current().start()
+    asyncio.get_event_loop().run_forever()

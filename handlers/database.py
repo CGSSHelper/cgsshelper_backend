@@ -27,7 +27,7 @@ conn_params = dict(host=os.getenv("DB_HOST", 'localhost'),
                    password=os.getenv("DB_PASSWORD", ''),
                    db=os.getenv("DB_DATABASE", 'cgssh'),
                    cursorclass=aiomysql.DictCursor,
-                   autocommit=True)
+                   autocommit=True, loop=asyncio.get_event_loop())
 
 
 @asyncio.coroutine
