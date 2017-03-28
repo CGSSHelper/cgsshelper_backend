@@ -117,11 +117,11 @@ def call_update():
 
 @tornado.gen.coroutine
 def main():
-    update_res = yield call_update()
+    update_res = 1 # yield call_update()
+    user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
+    client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
     if(update_res is 1 or update_res is 0):
         # just like a game client
-        user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
-        client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
         args = {
             "campaign_data": "",
             "campaign_user": 1337,
@@ -146,14 +146,17 @@ def main():
     # Connect to the database
     # global connection
     # connection = database.connect()
+    pointDisp = yield parsePointDisp()
+    scoreDisp = yield parseScoreDisp()
     if(data["result"]["comm_data"]["type"] == 'Medley'):
-        yield from getMedleyRank(client, parsePointDisp(), parseScoreDisp())
+        yield from getMedleyRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
-        yield from getAtaponRank(client, parsePointDisp(), parseScoreDisp())
+        yield from getAtaponRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
-        yield from getTourRank(client, parseScoreDisp())
+        yield from getTourRank(client, scoreDisp)
     # connection.close()
 
+@tornado.gen.coroutine
 def parsePointDisp():
     event_type = None
     if(data["result"]["comm_data"]["type"] == 'Medley'):
@@ -167,10 +170,11 @@ def parsePointDisp():
         res = yield http_client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
         data3 = json.loads(res.body.decode("utf-8"))
         for i in range(5):
-            rank = data3["result"]["detail"]["point_rank"]["disp"][i]
+            rank = data3["result"]["detail"][event_type]["point_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
 
+@tornado.gen.coroutine
 def parseScoreDisp():
     event_type = None
     if(data["result"]["comm_data"]["type"] == 'Medley'):
@@ -184,9 +188,10 @@ def parseScoreDisp():
         res = yield http_client.fetch("http://127.0.0.1:{0}/event/{1}".format(options.port, data["result"]["comm_data"]["id"]))
         data3 = json.loads(res.body.decode("utf-8"))
         for i in range(3):
-            rank = data3["result"]["detail"]["score_rank"]["disp"][i]
+            rank = data3["result"]["detail"][event_type]["score_rank"]["disp"][i]
             ret.append(round(int(rank["rank_max"]) / 10))
         return ret
+    return []
 
 def getAtaponRank(client, pointdisp, scoredisp):
     args = {}
