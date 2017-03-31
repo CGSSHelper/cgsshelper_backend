@@ -119,7 +119,7 @@ def call_update():
 
 @tornado.gen.coroutine
 def main():
-    update_res = 1 # yield call_update()
+    update_res = yield call_update()
     user_id, viewer_id, udid = os.getenv("VC_ACCOUNT", "::").split(":")
     client = apiclient.ApiClient(user_id, viewer_id, udid, VERSION)
     if(update_res is 1 or update_res is 0):
@@ -286,6 +286,6 @@ def getMedleyRank(client, pointdisp, scoredisp):
 if __name__ == '__main__':
     AsyncIOMainLoop().install()
     checkcall()
-    tornado.ioloop.PeriodicCallback(checkcall, 10 * 1000).start()
+    tornado.ioloop.PeriodicCallback(checkcall, 15 * 60 * 1000).start()
     # tornado.ioloop.IOLoop.current().start()
     asyncio.get_event_loop().run_forever()
