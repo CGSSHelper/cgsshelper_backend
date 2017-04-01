@@ -148,13 +148,16 @@ def main():
     # Connect to the database
     # global connection
     # connection = database.connect()
-    pointDisp = yield parsePointDisp()
-    scoreDisp = yield parseScoreDisp()
     if(data["result"]["comm_data"]["type"] == 'Medley'):
+        pointDisp = yield parsePointDisp()
+        scoreDisp = yield parseScoreDisp()
         yield getMedleyRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Atapon'):
+        pointDisp = yield parsePointDisp()
+        scoreDisp = yield parseScoreDisp()
         yield getAtaponRank(client, pointDisp, scoreDisp)
     elif(data["result"]["comm_data"]["type"] == 'Tour'):
+        scoreDisp = yield parseScoreDisp()
         yield getTourRank(client, scoreDisp)
     # connection.close()
 
