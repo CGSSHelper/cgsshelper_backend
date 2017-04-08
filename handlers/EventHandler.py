@@ -17,7 +17,7 @@ class EventAllHandler(BaseHandler):
             reader = csv.DictReader(f)
             events = []
             for row in reader:
-                events.append(row)
+                events.append({"comm_data": row})
             self.write(events)
 
 
