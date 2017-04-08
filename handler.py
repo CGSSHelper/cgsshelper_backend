@@ -23,6 +23,7 @@ class myFileHandler(StaticFileHandler):
             return abspath
             
     def get_content_type(self):
+        abspath = super().validate_absolute_path(root, absolute_path)
         if ("png" in abspath) and ("image/webp" in self.request.headers.get("accept")) and (os.stat(abspath).st_size > 100000):
             # set header to image/webp to prevent download
             return "image/webp"
