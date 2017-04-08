@@ -26,17 +26,23 @@ class EventPointHandler(BaseHandler):
     @gen.coroutine
     def get(self, event_id):
         event = getEventCommData(event_id)
-        if(event["comm_data"]["type"] in ["Caravan", "Party", "Tour"] or event["comm_data"] == {}):
+        if(event["comm_data"]["type"] in ["Caravan", "Party"] or event["comm_data"] == {}):
             self.write("this event not exists or has no point rank")
             return
 
         sql = "SELECT level1,level2,level3,level4,level5,updatetime FROM `point_score` WHERE `actid`=%s ORDER BY level1"
-        result = yield database.execute(sql, (event_id,))
+        result1 = yield database.execute(sql, (event_id,))
 
-        for item in result:
+        for item in result1:
             item["updatetime"] = item["updatetime"].strftime('%Y-%m-%d %H:%M:%S')
+            
+        sql = "SELECT level1,level2,level3,update_time FROM `score_rank` WHERE `event_id`=%s ORDER BY level1"
+        result2 = yield database.execute(sql, (event_id,))
 
-        self.write({"event_id": event_id, "point_ranks": result})
+        for item in result2:
+            item["update_time"] = item["update_time"].strftime('%Y-%m-%d %H:%M:%S')
+
+        self.write({"event_id": event_id, "point_ranks": result1, "score_ranks": result2})
 
 
 class EventDetailHandler(BaseHandler):
