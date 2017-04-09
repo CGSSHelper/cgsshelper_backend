@@ -60,6 +60,9 @@ def checkcall():
             main()
         elif(diff_time_result > 0 and diff_time_result <= 900):
             main()
+        else:
+            # check update all the time
+            call_update()
     else:
         res = yield http_client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
