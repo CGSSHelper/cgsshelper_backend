@@ -37,13 +37,13 @@ def checkcall():
         print("Is our server down?")
         return
     data = json.loads(res.body.decode("utf-8"))
+    VERSION = getVersion()
     if(data["result"]["comm_data"]):
         diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_start"]))).total_seconds()
         diff_time_event = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["event_end"]))).total_seconds()
         diff_time_result = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data["result"]["comm_data"]["result_start"]))).total_seconds()
         eventtype = data["result"]["comm_data"]["type"]
         eventid = data["result"]["comm_data"]["id"]
-        VERSION = getVersion()
 
         if(data["result"]["comm_data"]["type"] == 'Party' or data["result"]["comm_data"]["type"] == 'Cavaran'):
             return
@@ -66,11 +66,14 @@ def checkcall():
     else:
         res = yield http_client.fetch("http://127.0.0.1:{}/event/next".format(options.port))
         data2 = json.loads(res.body.decode("utf-8"))
-        diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099',str(datetime.now(timezone('Asia/Tokyo')).year))))).total_seconds()
+        try:
+            diff_time_start = (datetime.now(timezone('Asia/Tokyo')) - (parser.parse(data2["result"]["comm_data"]["event_start"].replace('2099',str(datetime.now(timezone('Asia/Tokyo')).year))))).total_seconds()
+        except KeyError:
+            diff_time_start = 0
         if diff_time_start > 0: #(not data["result"]["comm_data"] and not data2["result"]["comm_data"]):
             VERSION = getVersion()
             main()
-        elif(bot.is_running()):
+        elif(bot and bot.is_running()):
             bot.stop()
         else:
             # check update all the time
@@ -108,14 +111,6 @@ def call_update():
             os.environ['VC_APP_VER'] = match_ver[0]
             return 1
         else:
-            return -1
-    if res_ver != "-1":
-        try:
-            res_run = subprocess.run([STATIC_UPDATE_EXEC, STATIC_UPDATE_SCRIPT], env=os.environ.copy())
-            res_run.check_returncode()
-            return 1
-        except:
-            # maybe game server down
             return -1
     else:
         return 0
